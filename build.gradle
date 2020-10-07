@@ -21,6 +21,14 @@ targetCompatibility = 1.8
 dependencies {
     compile  "org.embulk:embulk-core:0.9.23"
     provided "org.embulk:embulk-core:0.9.23"
+    compile  "org.embulk:embulk-core:0.9.23"
+
+    compile  'com.google.code.gson:gson:2.8.6'
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
+
     // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
     testCompile "junit:junit:4.+"
 }

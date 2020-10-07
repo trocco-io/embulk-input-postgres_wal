@@ -1,6 +1,6 @@
 # Postgres Wal input plugin for Embulk
 
-TODO: Write short description here and build.gradle file.
+Fetch wal from PostgreSQL
 
 ## Overview
 
