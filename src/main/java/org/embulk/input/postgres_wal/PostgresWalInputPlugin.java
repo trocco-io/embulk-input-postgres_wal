@@ -27,7 +27,7 @@ public class PostgresWalInputPlugin
 
         // initialize connection
         ConnectionManager.setProperties(task.getHost(), task.getPort(),
-                task.getDatabase(), task.getUser(), task.getPassword());
+                task.getDatabase(), task.getUser(), task.getPassword(), task.getOptions());
 
         Schema schema = task.getColumns().toSchema();
         int taskCount = 1;  // number of run() method calls
