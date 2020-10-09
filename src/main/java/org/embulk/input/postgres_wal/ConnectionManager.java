@@ -5,6 +5,7 @@ import org.postgresql.PGProperty;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Properties;
 
 public class ConnectionManager {
@@ -16,8 +17,9 @@ public class ConnectionManager {
     private static String password;
     private static Connection sqlConnection;
     private static Connection repConnection;
+    private static Map<String, String> options;
 
-    public static void setProperties(String server, Integer port, String database, String user, String password) {
+    public static void setProperties(String server, Integer port, String database, String user, String password, Map<String, String> options) {
         ConnectionManager.server = server;
         ConnectionManager.database = database;
         ConnectionManager.user = user;
@@ -27,6 +29,7 @@ public class ConnectionManager {
             password = "";
         }
         ConnectionManager.password = password;
+        ConnectionManager.options = options;
     }
 
     public static void createReplicationConnection() throws SQLException {
@@ -39,8 +42,9 @@ public class ConnectionManager {
         PGProperty.ASSUME_MIN_SERVER_VERSION.set(props, "9.4");
         PGProperty.REPLICATION.set(props, "database");
         PGProperty.PREFER_QUERY_MODE.set(props, "simple");
+        props.putAll(ConnectionManager.options);
 
-        Connection conn = null;
+        Connection conn;
 
         conn = DriverManager.getConnection(url, props);
 
@@ -62,6 +66,7 @@ public class ConnectionManager {
 
         props.setProperty("user", ConnectionManager.user);
         props.setProperty("password", ConnectionManager.password);
+        props.putAll(ConnectionManager.options);
 
         Connection conn = null;
 
