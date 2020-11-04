@@ -1,9 +1,8 @@
-package org.embulk.input.postgres_wal.decoders;
+package org.embulk.input.postgresql_wal.decoders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.rowset.internal.InsertRow;
-import org.embulk.input.postgres_wal.model.*;
+import org.embulk.input.postgresql_wal.model.*;
 import org.postgresql.replication.LogSequenceNumber;
 
 import java.io.IOException;
@@ -13,9 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 
 // {

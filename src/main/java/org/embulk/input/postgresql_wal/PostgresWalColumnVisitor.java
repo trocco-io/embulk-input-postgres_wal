@@ -1,4 +1,4 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import com.google.gson.JsonElement;
 import org.embulk.spi.Column;

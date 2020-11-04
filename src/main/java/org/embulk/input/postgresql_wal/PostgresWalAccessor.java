@@ -1,4 +1,4 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import java.util.Map;
 

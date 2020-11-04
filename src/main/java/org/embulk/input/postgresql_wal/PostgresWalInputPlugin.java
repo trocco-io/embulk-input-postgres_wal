@@ -1,15 +1,10 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import java.util.List;
 
-import com.google.common.base.Optional;
-
 import com.google.common.collect.ImmutableList;
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
-import org.embulk.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.*;

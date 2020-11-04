@@ -1,13 +1,14 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.embulk.input.postgres_wal.decoders.Wal2JsonDecoderPlugin;
-import org.embulk.input.postgres_wal.model.AbstractRowEvent;
-import org.embulk.input.postgres_wal.model.DeleteRowEvent;
-import org.embulk.input.postgres_wal.model.InsertRowEvent;
-import org.embulk.input.postgres_wal.model.UpdateRowEvent;
+import org.embulk.input.postgresql_wal.decoders.Wal2JsonDecoderPlugin;
+import org.embulk.input.postgresql_wal.model.AbstractRowEvent;
+import org.embulk.input.postgresql_wal.model.DeleteRowEvent;
+import org.embulk.input.postgresql_wal.model.InsertRowEvent;
+import org.embulk.input.postgresql_wal.model.UpdateRowEvent;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.Schema;
+import org.postgresql.replication.LogSequenceNumber;
 import org.postgresql.replication.PGReplicationStream;
 
 import java.nio.ByteBuffer;
@@ -38,7 +39,7 @@ public class PostgresWalDumper {
             // System.out.println(client.getCurrentWalLSN());
             // System.out.println(client.getMajorVersion());
 
-            PGReplicationStream stream = walClient.getReplicationStream(task.getReplicationSlot());
+            PGReplicationStream stream = walClient.getReplicationStream(task.getSlot());
             while(!stream.isClosed()){
                 ByteBuffer msg = stream.readPending(); // non-blocking
                 if (msg == null) {
@@ -51,13 +52,14 @@ public class PostgresWalDumper {
                 // should be update?
                 // stream.setAppliedLSN(stream.getLastReceiveLSN());
                 // stream.setFlushedLSN(stream.getLastReceiveLSN());
-
-                // TODO: end condition
+                LogSequenceNumber lsn = stream.getLastAppliedLSN();
+                System.out.println(lsn);
+                System.out.println(lsn.asString());
+                System.out.println(lsn.asLong());
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-        System.out.println("foo");
     }
 
 

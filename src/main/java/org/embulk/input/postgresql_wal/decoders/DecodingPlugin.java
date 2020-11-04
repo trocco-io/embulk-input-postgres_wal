@@ -1,6 +1,6 @@
-package org.embulk.input.postgres_wal.decoders;
+package org.embulk.input.postgresql_wal.decoders;
 
-import org.embulk.input.postgres_wal.model.AbstractWalEvent;
+import org.embulk.input.postgresql_wal.model.AbstractWalEvent;
 import org.postgresql.replication.LogSequenceNumber;
 
 import java.nio.ByteBuffer;

@@ -1,8 +1,6 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import org.postgresql.PGConnection;
-import org.postgresql.PGProperty;
-import org.postgresql.replication.LogSequenceNumber;
 import org.postgresql.replication.PGReplicationStream;
 
 import java.sql.*;

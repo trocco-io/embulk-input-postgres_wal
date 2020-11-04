@@ -1,4 +1,4 @@
-package org.embulk.input.postgres_wal;
+package org.embulk.input.postgresql_wal;
 
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -55,7 +55,10 @@ public interface PluginTask
     @ConfigDefault("\"UTC\"")
     String getDefaultTimezone();
 
-    @Config("replication_slot")
+    @Config("slot")
+    String getSlot();
+
+    @Config("to_sln")
     String getReplicationSlot();
 
 }
