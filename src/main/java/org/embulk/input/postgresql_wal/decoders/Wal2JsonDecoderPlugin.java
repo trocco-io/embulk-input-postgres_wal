@@ -54,33 +54,46 @@ import java.util.Map;
 //}
 
 
-
 public class Wal2JsonDecoderPlugin implements DecodingPlugin {
     private ObjectMapper mapper;
-    class ArrayStringWrapper {
-        private List<String> values;
-    }
 
-    public Wal2JsonDecoderPlugin(){
+    public Wal2JsonDecoderPlugin() {
         mapper = new ObjectMapper();
     }
 
     @Override
     public AbstractRowEvent decode(final ByteBuffer data, final LogSequenceNumber logSequenceNumber) {
+        // TODO: should return array of row event?
         AbstractRowEvent result = new AbstractRowEvent();
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
             JsonNode node = mapper.readTree(jsonStr);
-            JsonNode chagne = node.get("change");
-            if (chagne.get("kind").asText().equals(EventType.INSERT.getString())){
-                return decodeInsertEvent(chagne);
-            }else if(chagne.get("kind").asText().equals(EventType.UPDATE.getString())){
-                return decodeUpdateEvent(chagne);
-            }else if(chagne.get("kind").asText().equals(EventType.DELETE.getString())){
-                return decodeDeleteEvent(chagne);
+            JsonNode changeNode = node.get("change");
+            System.out.println(changeNode.isArray());
+            System.out.println(node);
+            System.out.println(changeNode);
+            System.out.println(changeNode.isArray());
+            if (changeNode.isArray() && changeNode.size() >= 1) {
+                System.out.println("before loop ================");
+                System.out.println(changeNode.size());
+                for (JsonNode dataNode : changeNode) {
+                    System.out.println("loop ================");
+                    System.out.println(dataNode);
+                    System.out.println(dataNode.has("kind"));
+                    System.out.println("chekc ================");
+                    if (!dataNode.has("kind")) {
+                        continue;
+                    }
+                    if (dataNode.get("kind").asText().equals(EventType.INSERT.getString())) {
+                        return decodeInsertEvent(dataNode);
+                    } else if (dataNode.get("kind").asText().equals(EventType.UPDATE.getString())) {
+                        return decodeUpdateEvent(dataNode);
+                    } else if (dataNode.get("kind").asText().equals(EventType.DELETE.getString())) {
+                        return decodeDeleteEvent(dataNode);
+                    }
+                }
             }
-
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -196,12 +209,12 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         return rowEvent;
     }
 
-    private void setMeta(AbstractRowEvent rowEvent,JsonNode node){
+    private void setMeta(AbstractRowEvent rowEvent, JsonNode node) {
         rowEvent.setSchemaName(node.get("schema").asText());
         rowEvent.setTableName(node.get("table").asText());
     }
 
-    private ArrayList<String> covertArrayString(JsonNode node, String name){
+    private ArrayList<String> covertArrayString(JsonNode node, String name) {
         ArrayList<String> values = new ArrayList<>();
         for (JsonNode n : node.get(name)) {
             values.add(n.asText());
@@ -209,15 +222,19 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         return values;
     }
 
-    private Map<String, String> makePair(JsonNode node, String keyName, String valueName){
+    private Map<String, String> makePair(JsonNode node, String keyName, String valueName) {
         ArrayList<String> columnNames = covertArrayString(node, keyName);
         ArrayList<String> columnValues = covertArrayString(node, valueName);
         Map<String, String> pair = new HashMap<>();
-        for (int i = 0; i < Math.max(columnNames.size(), columnValues.size()); i++){
+        for (int i = 0; i < Math.max(columnNames.size(), columnValues.size()); i++) {
             pair.put(columnNames.get(i), columnValues.get(i));
         }
 
         return pair;
+    }
+
+    class ArrayStringWrapper {
+        private List<String> values;
     }
 }
 

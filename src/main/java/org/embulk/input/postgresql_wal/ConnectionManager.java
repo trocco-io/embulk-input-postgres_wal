@@ -20,6 +20,12 @@ public class ConnectionManager {
     private static Map<String, String> options;
 
     public static void setProperties(String server, Integer port, String database, String user, String password, Map<String, String> options) {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (Exception ignored) {
+
+        }
+        ;
         ConnectionManager.server = server;
         ConnectionManager.database = database;
         ConnectionManager.user = user;
@@ -33,7 +39,7 @@ public class ConnectionManager {
     }
 
     public static void createReplicationConnection() throws SQLException {
-        String url = "jdbc:postgresql://" + ConnectionManager.server + "/" + ConnectionManager.database;
+        String url = "jdbc:postgresql://" + ConnectionManager.server + ":" + ConnectionManager.port + "/" + ConnectionManager.database;
 
         Properties props = new Properties();
 
@@ -44,11 +50,7 @@ public class ConnectionManager {
         PGProperty.PREFER_QUERY_MODE.set(props, "simple");
         props.putAll(ConnectionManager.options);
 
-        Connection conn;
-
-        conn = DriverManager.getConnection(url, props);
-
-        ConnectionManager.repConnection = conn;
+        ConnectionManager.repConnection = DriverManager.getConnection(url, props);
     }
 
     public static Connection getReplicationConnection() {
@@ -60,7 +62,7 @@ public class ConnectionManager {
     }
 
     public static void createSQLConnection() throws SQLException {
-        String url = "jdbc:postgresql://" + ConnectionManager.server + "/" + ConnectionManager.database;
+        String url = "jdbc:postgresql://" + ConnectionManager.server + ":" + ConnectionManager.port + "/" + ConnectionManager.database;
 
         Properties props = new Properties();
 
@@ -68,12 +70,7 @@ public class ConnectionManager {
         props.setProperty("password", ConnectionManager.password);
         props.putAll(ConnectionManager.options);
 
-        Connection conn = null;
-
-        conn = DriverManager.getConnection(url, props);
-
-
-        ConnectionManager.sqlConnection = conn;
+        ConnectionManager.sqlConnection = DriverManager.getConnection(url, props);
     }
 
     public static Connection getSQLConnection() {

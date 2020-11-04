@@ -25,7 +25,7 @@ public class PostgresqlWalDumper {
     private Connection connection;
     private Wal2JsonDecoderPlugin decoderPlugin;
 
-    public PostgresqlWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection){
+    public PostgresqlWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection) {
         this.task = task;
         this.pageBuilder = pageBuilder;
         this.schema = schema;
@@ -33,20 +33,23 @@ public class PostgresqlWalDumper {
         this.decoderPlugin = new Wal2JsonDecoderPlugin();
     }
 
-    public void start(){
-        try{
+    public void start() {
+        try {
             walClient = new PostgresqlWalClient(connection);
             // System.out.println(client.getCurrentWalLSN());
             // System.out.println(client.getMajorVersion());
 
             PGReplicationStream stream = walClient.getReplicationStream(task.getSlot());
-            while(!stream.isClosed()){
+            while (!stream.isClosed()) {
                 ByteBuffer msg = stream.readPending(); // non-blocking
                 if (msg == null) {
                     TimeUnit.MILLISECONDS.sleep(10L);
                     continue;
                 }
                 AbstractRowEvent rowEvent = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
+                if (rowEvent == null) {
+                    continue;
+                }
                 handleRowEvent(rowEvent);
 
                 // should be update?
@@ -57,20 +60,20 @@ public class PostgresqlWalDumper {
                 System.out.println(lsn.asString());
                 System.out.println(lsn.asLong());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
     @VisibleForTesting
-    public void addRows(Map<String, String> row, boolean deleteFlag){
+    public void addRows(Map<String, String> row, boolean deleteFlag) {
         // TODO: add meta data
-        if(task.getEnableMetadataDeleted()){
+        if (task.getEnableMetadataDeleted()) {
             row.put(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag));
         }
 
-        if (task.getEnableMetadataSeq()){
+        if (task.getEnableMetadataSeq()) {
             row.put(PostgresqlWalUtil.getSeqName(task), String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()));
         }
 
@@ -80,7 +83,7 @@ public class PostgresqlWalDumper {
 
     @VisibleForTesting
     public void handleRowEvent(AbstractRowEvent rowEvent) {
-        switch (rowEvent.getEventType()){
+        switch (rowEvent.getEventType()) {
             case INSERT:
                 handleInsert((InsertRowEvent) rowEvent);
                 break;
@@ -97,19 +100,19 @@ public class PostgresqlWalDumper {
     }
 
     @VisibleForTesting
-    public void handleInsert(InsertRowEvent insertRowEvent){
+    public void handleInsert(InsertRowEvent insertRowEvent) {
         addRows(insertRowEvent.getFields(), false);
     }
 
     @VisibleForTesting
-    public void handleUpdate(UpdateRowEvent updateRowEvent){
+    public void handleUpdate(UpdateRowEvent updateRowEvent) {
         addRows(updateRowEvent.getPrimaryKeys(), true);
         addRows(updateRowEvent.getFields(), false);
 
     }
 
     @VisibleForTesting
-    public void handleDelete(DeleteRowEvent deleteRowEvent){
+    public void handleDelete(DeleteRowEvent deleteRowEvent) {
         addRows(deleteRowEvent.getPrimaryKeys(), true);
     }
 }

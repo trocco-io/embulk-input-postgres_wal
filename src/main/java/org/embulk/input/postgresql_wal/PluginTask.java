@@ -7,8 +7,7 @@ import org.embulk.spi.SchemaConfig;
 import org.embulk.spi.unit.ToStringMap;
 
 public interface PluginTask
-        extends Task
-{
+        extends Task {
     @Config("options")
     @ConfigDefault("{}")
     public ToStringMap getOptions();
@@ -58,7 +57,7 @@ public interface PluginTask
     @Config("slot")
     String getSlot();
 
-    @Config("to_sln")
-    String getReplicationSlot();
+    @Config("to_lsn")
+    String getToLsn();
 
 }

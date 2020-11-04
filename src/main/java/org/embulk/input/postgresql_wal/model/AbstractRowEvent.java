@@ -1,6 +1,6 @@
 package org.embulk.input.postgresql_wal.model;
 
-public class AbstractRowEvent  extends AbstractWalEvent {
+public class AbstractRowEvent extends AbstractWalEvent {
 
     private String schemaName;
 
@@ -22,7 +22,7 @@ public class AbstractRowEvent  extends AbstractWalEvent {
         this.tableName = tableName;
     }
 
-    public EventType getEventType(){
+    public EventType getEventType() {
         return null;
     }
 

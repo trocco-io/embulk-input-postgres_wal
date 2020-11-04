@@ -2,6 +2,7 @@ package org.embulk.input.postgresql_wal;
 
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
@@ -11,13 +12,11 @@ import org.embulk.spi.*;
 import org.embulk.spi.type.Types;
 
 public class PostgresqlWalInputPlugin
-        implements InputPlugin
-{
+        implements InputPlugin {
 
     @Override
     public ConfigDiff transaction(ConfigSource config,
-            InputPlugin.Control control)
-    {
+                                  InputPlugin.Control control) {
         PluginTask task = config.loadConfig(PluginTask.class);
 
         // initialize connection
@@ -32,40 +31,48 @@ public class PostgresqlWalInputPlugin
 
     @Override
     public ConfigDiff resume(TaskSource taskSource,
-            Schema schema, int taskCount,
-            InputPlugin.Control control)
-    {
+                             Schema schema, int taskCount,
+                             InputPlugin.Control control) {
         control.run(taskSource, schema, taskCount);
         return Exec.newConfigDiff();
     }
 
     @Override
     public void cleanup(TaskSource taskSource,
-            Schema schema, int taskCount,
-            List<TaskReport> successTaskReports)
-    {
+                        Schema schema, int taskCount,
+                        List<TaskReport> successTaskReports) {
     }
 
     @Override
     public TaskReport run(TaskSource taskSource,
-            Schema schema, int taskIndex,
-            PageOutput output)
-    {
+                          Schema schema, int taskIndex,
+                          PageOutput output) {
         PluginTask task = taskSource.loadTask(PluginTask.class);
+        try {
+            ConnectionManager.createReplicationConnection();
+            try (PageBuilder pageBuilder = getPageBuilder(schema, output)) {
+                PostgresqlWalDumper postgresqlWalDumper = new PostgresqlWalDumper(task, pageBuilder, schema, ConnectionManager.getReplicationConnection());
+                postgresqlWalDumper.start();
+            }
+        } catch (Exception e) {
+            // TODO: handle error
+            System.out.println(e.getMessage());
+        }
+        return Exec.newTaskReport();
 
-
-        // Write your code here :)
-        throw new UnsupportedOperationException("PostgresWalInputPlugin.run method is not implemented yet");
     }
 
     @Override
-    public ConfigDiff guess(ConfigSource config)
-    {
+    public ConfigDiff guess(ConfigSource config) {
         return Exec.newConfigDiff();
     }
 
+    @VisibleForTesting
+    protected PageBuilder getPageBuilder(final Schema schema, final PageOutput output) {
+        return new PageBuilder(Exec.getBufferAllocator(), schema, output);
+    }
 
-    private Schema buildSchema(PluginTask task){
+    private Schema buildSchema(PluginTask task) {
         int i = 0;
 
         // add meta data
@@ -75,17 +82,17 @@ public class PostgresqlWalInputPlugin
             builder.add(outputColumn);
         }
         // add meta data schema
-        if (task.getEnableMetadataDeleted()){
+        if (task.getEnableMetadataDeleted()) {
             Column deleteFlagColumn = new Column(i++, PostgresqlWalUtil.getDeleteFlagName(task), Types.BOOLEAN);
             builder.add(deleteFlagColumn);
         }
 
-        if (task.getEnableMetadataFetchedAt()){
+        if (task.getEnableMetadataFetchedAt()) {
             Column fetchedAtColumn = new Column(i++, PostgresqlWalUtil.getFetchedAtName(task), Types.TIMESTAMP);
             builder.add(fetchedAtColumn);
         }
 
-        if (task.getEnableMetadataSeq()){
+        if (task.getEnableMetadataSeq()) {
             Column seqColumn = new Column(i++, PostgresqlWalUtil.getSeqName(task), Types.LONG);
             builder.add(seqColumn);
         }

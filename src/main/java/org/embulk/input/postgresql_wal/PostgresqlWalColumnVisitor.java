@@ -80,9 +80,9 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
         try {
             Timestamp result;
             // meta_fetched_at need microsecond
-            if (column.getName().equals(PostgresqlWalUtil.getFetchedAtName(this.pluginTask))){
+            if (column.getName().equals(PostgresqlWalUtil.getFetchedAtName(this.pluginTask))) {
                 result = Timestamp.ofInstant(Instant.now());
-            }else {
+            } else {
                 List<ColumnConfig> columnConfigs = pluginTask.getColumns().getColumns();
                 String pattern = DEFAULT_TIMESTAMP_PATTERN;
                 for (ColumnConfig config : columnConfigs) {
