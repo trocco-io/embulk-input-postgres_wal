@@ -15,16 +15,16 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
-public class PostgresWalColumnVisitor implements ColumnVisitor {
+public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     // timestamp pattern?
     private static final String DEFAULT_TIMESTAMP_PATTERN = "%Y-%m-%d %H:%M:%S";
-    private final Logger logger = LoggerFactory.getLogger(PostgresWalColumnVisitor.class);
+    private final Logger logger = LoggerFactory.getLogger(PostgresqlWalColumnVisitor.class);
 
     private final PageBuilder pageBuilder;
     private final PluginTask pluginTask;
-    private final PostgresWalAccessor accessor;
+    private final PostgresqlWalAccessor accessor;
 
-    public PostgresWalColumnVisitor(final PostgresWalAccessor accessor, final PageBuilder pageBuilder, final PluginTask pluginTask) {
+    public PostgresqlWalColumnVisitor(final PostgresqlWalAccessor accessor, final PageBuilder pageBuilder, final PluginTask pluginTask) {
         this.accessor = accessor;
         this.pageBuilder = pageBuilder;
         this.pluginTask = pluginTask;
@@ -80,7 +80,7 @@ public class PostgresWalColumnVisitor implements ColumnVisitor {
         try {
             Timestamp result;
             // meta_fetched_at need microsecond
-            if (column.getName().equals(PostgresWalUtil.getFetchedAtName(this.pluginTask))){
+            if (column.getName().equals(PostgresqlWalUtil.getFetchedAtName(this.pluginTask))){
                 result = Timestamp.ofInstant(Instant.now());
             }else {
                 List<ColumnConfig> columnConfigs = pluginTask.getColumns().getColumns();

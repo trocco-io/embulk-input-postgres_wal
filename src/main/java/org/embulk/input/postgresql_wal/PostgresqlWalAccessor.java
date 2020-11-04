@@ -2,10 +2,10 @@ package org.embulk.input.postgresql_wal;
 
 import java.util.Map;
 
-public class PostgresWalAccessor {
+public class PostgresqlWalAccessor {
     private final Map<String, String> row;
 
-    public PostgresWalAccessor(final Map<String, String> row){
+    public PostgresqlWalAccessor(final Map<String, String> row){
         this.row = row;
     }
 

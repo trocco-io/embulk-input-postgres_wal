@@ -16,16 +16,16 @@ import java.sql.Connection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class PostgresWalDumper {
+public class PostgresqlWalDumper {
     private PluginTask task;
     private PageBuilder pageBuilder;
     private Schema schema;
     private ConnectionManager connectionManager;
-    private PostgresWalClient walClient;
+    private PostgresqlWalClient walClient;
     private Connection connection;
     private Wal2JsonDecoderPlugin decoderPlugin;
 
-    public PostgresWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection){
+    public PostgresqlWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection){
         this.task = task;
         this.pageBuilder = pageBuilder;
         this.schema = schema;
@@ -35,7 +35,7 @@ public class PostgresWalDumper {
 
     public void start(){
         try{
-            walClient = new PostgresWalClient(connection);
+            walClient = new PostgresqlWalClient(connection);
             // System.out.println(client.getCurrentWalLSN());
             // System.out.println(client.getMajorVersion());
 
@@ -67,14 +67,14 @@ public class PostgresWalDumper {
     public void addRows(Map<String, String> row, boolean deleteFlag){
         // TODO: add meta data
         if(task.getEnableMetadataDeleted()){
-            row.put(PostgresWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag));
+            row.put(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag));
         }
 
         if (task.getEnableMetadataSeq()){
-            row.put(PostgresWalUtil.getSeqName(task), String.valueOf(PostgresWalUtil.getSeqCounter().incrementAndGet()));
+            row.put(PostgresqlWalUtil.getSeqName(task), String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()));
         }
 
-        schema.visitColumns(new PostgresWalColumnVisitor(new PostgresWalAccessor(row), pageBuilder, task));
+        schema.visitColumns(new PostgresqlWalColumnVisitor(new PostgresqlWalAccessor(row), pageBuilder, task));
         pageBuilder.addRecord();
     }
 

@@ -1,5 +1,5 @@
 package org.embulk.input.postgresql_wal;
 
-public class TestPostgresWalInputPlugin
+public class TestPostgresqlWalInputPlugin
 {
 }

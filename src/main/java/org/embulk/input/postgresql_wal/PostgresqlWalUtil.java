@@ -2,7 +2,7 @@ package org.embulk.input.postgresql_wal;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class PostgresWalUtil {
+public class PostgresqlWalUtil {
     public static String getDeleteFlagName(PluginTask task){
         return task.getMetadataPrefix() + "deleted";
     }

@@ -19,7 +19,7 @@ Fetch wal from PostgreSQL
 
 ```yaml
 in:
-  type: postgres_wal
+  type: postgresql_wal
   option1: example1
   option2: example2
 ```

@@ -10,7 +10,7 @@ import org.embulk.config.TaskSource;
 import org.embulk.spi.*;
 import org.embulk.spi.type.Types;
 
-public class PostgresWalInputPlugin
+public class PostgresqlWalInputPlugin
         implements InputPlugin
 {
 
@@ -76,17 +76,17 @@ public class PostgresWalInputPlugin
         }
         // add meta data schema
         if (task.getEnableMetadataDeleted()){
-            Column deleteFlagColumn = new Column(i++, PostgresWalUtil.getDeleteFlagName(task), Types.BOOLEAN);
+            Column deleteFlagColumn = new Column(i++, PostgresqlWalUtil.getDeleteFlagName(task), Types.BOOLEAN);
             builder.add(deleteFlagColumn);
         }
 
         if (task.getEnableMetadataFetchedAt()){
-            Column fetchedAtColumn = new Column(i++, PostgresWalUtil.getFetchedAtName(task), Types.TIMESTAMP);
+            Column fetchedAtColumn = new Column(i++, PostgresqlWalUtil.getFetchedAtName(task), Types.TIMESTAMP);
             builder.add(fetchedAtColumn);
         }
 
         if (task.getEnableMetadataSeq()){
-            Column seqColumn = new Column(i++, PostgresWalUtil.getSeqName(task), Types.LONG);
+            Column seqColumn = new Column(i++, PostgresqlWalUtil.getSeqName(task), Types.LONG);
             builder.add(seqColumn);
         }
 

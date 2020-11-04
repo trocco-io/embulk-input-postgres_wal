@@ -7,11 +7,11 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class PostgresWalClient {
+public class PostgresqlWalClient {
     private static Properties props;
     private Connection con;
 
-    public PostgresWalClient(Connection con) throws SQLException {
+    public PostgresqlWalClient(Connection con) throws SQLException {
         this.con = con;
     }
 
