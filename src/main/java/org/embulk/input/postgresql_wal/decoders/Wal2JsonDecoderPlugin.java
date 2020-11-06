@@ -3,7 +3,9 @@ package org.embulk.input.postgresql_wal.decoders;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.embulk.input.postgresql_wal.model.*;
+import org.jruby.RubyProcess;
 import org.postgresql.replication.LogSequenceNumber;
+import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -62,34 +64,26 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
     }
 
     @Override
-    public AbstractRowEvent decode(final ByteBuffer data, final LogSequenceNumber logSequenceNumber) {
+    public List<AbstractRowEvent> decode(final ByteBuffer data, final LogSequenceNumber logSequenceNumber) {
         // TODO: should return array of row event?
-        AbstractRowEvent result = new AbstractRowEvent();
+        List<AbstractRowEvent> rows = new ArrayList<AbstractRowEvent>();
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
             JsonNode node = mapper.readTree(jsonStr);
             JsonNode changeNode = node.get("change");
-            System.out.println(changeNode.isArray());
-            System.out.println(node);
-            System.out.println(changeNode);
-            System.out.println(changeNode.isArray());
+            LogSequenceNumber nextLsn = LogSequenceNumber.valueOf(node.get("nextlsn").asText());
+
             if (changeNode.isArray() && changeNode.size() >= 1) {
-                System.out.println("before loop ================");
-                System.out.println(changeNode.size());
                 for (JsonNode dataNode : changeNode) {
-                    System.out.println("loop ================");
-                    System.out.println(dataNode);
-                    System.out.println(dataNode.has("kind"));
-                    System.out.println("chekc ================");
                     if (!dataNode.has("kind")) {
                         continue;
                     }
                     if (dataNode.get("kind").asText().equals(EventType.INSERT.getString())) {
-                        return decodeInsertEvent(dataNode);
+                        rows.add(decodeInsertEvent(dataNode, nextLsn));
                     } else if (dataNode.get("kind").asText().equals(EventType.UPDATE.getString())) {
-                        return decodeUpdateEvent(dataNode);
+                        rows.add(decodeUpdateEvent(dataNode, nextLsn));
                     } else if (dataNode.get("kind").asText().equals(EventType.DELETE.getString())) {
-                        return decodeDeleteEvent(dataNode);
+                        rows.add(decodeDeleteEvent(dataNode, nextLsn));
                     }
                 }
             }
@@ -97,9 +91,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
             e.printStackTrace();
         }
 
-
-        result.setLogSequenceNumber(logSequenceNumber);
-        return result;
+        return rows;
     }
 
     // {
@@ -129,8 +121,9 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
 //      }
 //   ]
 //}
-    public InsertRowEvent decodeInsertEvent(JsonNode node) {
+    public InsertRowEvent decodeInsertEvent(JsonNode node, LogSequenceNumber lsn) {
         InsertRowEvent rowEvent = new InsertRowEvent();
+        rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
         rowEvent.setFields(makePair(node, "columnnames", "columnvalues"));
         return rowEvent;
@@ -174,11 +167,12 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
 //      }
 //   ]
 //　}
-    public UpdateRowEvent decodeUpdateEvent(JsonNode node) {
+    public UpdateRowEvent decodeUpdateEvent(JsonNode node, LogSequenceNumber lsn) {
         UpdateRowEvent rowEvent = new UpdateRowEvent();
+        rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
         rowEvent.setFields(makePair(node, "columnnames", "columnvalues"));
-        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "columnnames", "columnvalues"));
+        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "keynames", "keyvalues"));
         return rowEvent;
     }
 
@@ -202,8 +196,9 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
 //      }
 //   ]
 //}
-    public DeleteRowEvent decodeDeleteEvent(JsonNode node) {
+    public DeleteRowEvent decodeDeleteEvent(JsonNode node, LogSequenceNumber lsn) {
         DeleteRowEvent rowEvent = new DeleteRowEvent();
+        rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
         rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "columnnames", "columnvalues"));
         return rowEvent;

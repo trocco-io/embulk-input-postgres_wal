@@ -6,6 +6,8 @@ import org.embulk.config.Task;
 import org.embulk.spi.SchemaConfig;
 import org.embulk.spi.unit.ToStringMap;
 
+import java.util.Optional;
+
 public interface PluginTask
         extends Task {
     @Config("options")
@@ -57,7 +59,19 @@ public interface PluginTask
     @Config("slot")
     String getSlot();
 
-    @Config("to_lsn")
-    String getToLsn();
+    @Config("from_lsn")
+    @ConfigDefault("null")
+    Optional<String> getFromLsn();
 
+    @Config("to_lsn")
+    @ConfigDefault("null")
+    Optional<String> getToLsn();
+
+    @Config("_wal_read_timeout")
+    @ConfigDefault("5000")
+    Long getWalReadTimeout();
+
+    @Config("_wal_initial_wait")
+    @ConfigDefault("100")
+    Long getWalInitialWait();
 }

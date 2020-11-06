@@ -50,7 +50,6 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
             String data = accessor.get(column.getName());
             pageBuilder.setBoolean(column, Boolean.parseBoolean(data));
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             pageBuilder.setNull(column);
         }
     }

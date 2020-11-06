@@ -2,10 +2,7 @@ package org.embulk.input.postgresql_wal;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.embulk.input.postgresql_wal.decoders.Wal2JsonDecoderPlugin;
-import org.embulk.input.postgresql_wal.model.AbstractRowEvent;
-import org.embulk.input.postgresql_wal.model.DeleteRowEvent;
-import org.embulk.input.postgresql_wal.model.InsertRowEvent;
-import org.embulk.input.postgresql_wal.model.UpdateRowEvent;
+import org.embulk.input.postgresql_wal.model.*;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.Schema;
 import org.postgresql.replication.LogSequenceNumber;
@@ -13,6 +10,7 @@ import org.postgresql.replication.PGReplicationStream;
 
 import java.nio.ByteBuffer;
 import java.sql.Connection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +22,7 @@ public class PostgresqlWalDumper {
     private PostgresqlWalClient walClient;
     private Connection connection;
     private Wal2JsonDecoderPlugin decoderPlugin;
+    private LogSequenceNumber lsn;
 
     public PostgresqlWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection) {
         this.task = task;
@@ -36,29 +35,42 @@ public class PostgresqlWalDumper {
     public void start() {
         try {
             walClient = new PostgresqlWalClient(connection);
-            // System.out.println(client.getCurrentWalLSN());
-            // System.out.println(client.getMajorVersion());
 
             PGReplicationStream stream = walClient.getReplicationStream(task.getSlot());
+            long waitMin = task.getWalInitialWait();
+            int retryCount = 0;
+            long wait = waitMin;
             while (!stream.isClosed()) {
                 ByteBuffer msg = stream.readPending(); // non-blocking
+                // stop if exceed LSN or time out
                 if (msg == null) {
-                    TimeUnit.MILLISECONDS.sleep(10L);
-                    continue;
+                    TimeUnit.MILLISECONDS.sleep(wait);
+                    retryCount += 1;
+                    wait = waitMin * (long)Math.pow(2, retryCount);
+                    if (wait < task.getWalReadTimeout()){
+                        continue;
+                    } else {
+                        break;
+                    }
+                }else{
+                    retryCount = 0;
+                    wait = waitMin;
                 }
-                AbstractRowEvent rowEvent = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
-                if (rowEvent == null) {
-                    continue;
-                }
-                handleRowEvent(rowEvent);
 
-                // should be update?
-                // stream.setAppliedLSN(stream.getLastReceiveLSN());
-                // stream.setFlushedLSN(stream.getLastReceiveLSN());
-                LogSequenceNumber lsn = stream.getLastAppliedLSN();
-                System.out.println(lsn);
-                System.out.println(lsn.asString());
-                System.out.println(lsn.asLong());
+                List<AbstractRowEvent> rowEvents = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
+                for (AbstractRowEvent rowEvent: rowEvents) {
+                    LsnHolder.setLsn(rowEvent.getNextLogSequenceNumber());
+                    if (rowEvent.getEventType() == null) {
+                        continue;
+                    }
+                    handleRowEvent(rowEvent);
+                }
+
+                if (task.getToLsn().isPresent()){
+                    if (LsnHolder.getLsn().asLong() >= LogSequenceNumber.valueOf(task.getToLsn().get()).asLong()){
+                        break;
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,7 +80,6 @@ public class PostgresqlWalDumper {
 
     @VisibleForTesting
     public void addRows(Map<String, String> row, boolean deleteFlag) {
-        // TODO: add meta data
         if (task.getEnableMetadataDeleted()) {
             row.put(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag));
         }

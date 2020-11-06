@@ -8,11 +8,14 @@ import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
+import org.embulk.input.postgresql_wal.model.LsnHolder;
 import org.embulk.spi.*;
 import org.embulk.spi.type.Types;
+import org.postgresql.replication.LogSequenceNumber;
 
 public class PostgresqlWalInputPlugin
         implements InputPlugin {
+    private LogSequenceNumber lsn;
 
     @Override
     public ConfigDiff transaction(ConfigSource config,
@@ -23,7 +26,7 @@ public class PostgresqlWalInputPlugin
         ConnectionManager.setProperties(task.getHost(), task.getPort(),
                 task.getDatabase(), task.getUser(), task.getPassword(), task.getOptions());
 
-        Schema schema = task.getColumns().toSchema();
+        Schema schema = buildSchema(task);
         int taskCount = 1;  // number of run() method calls
 
         return resume(task.dump(), schema, taskCount, control);
@@ -34,7 +37,11 @@ public class PostgresqlWalInputPlugin
                              Schema schema, int taskCount,
                              InputPlugin.Control control) {
         control.run(taskSource, schema, taskCount);
-        return Exec.newConfigDiff();
+
+        ConfigDiff configDiff = Exec.newConfigDiff();
+
+        configDiff.set("from_lsn", LsnHolder.getLsn().asString());
+        return configDiff;
     }
 
     @Override
@@ -53,13 +60,13 @@ public class PostgresqlWalInputPlugin
             try (PageBuilder pageBuilder = getPageBuilder(schema, output)) {
                 PostgresqlWalDumper postgresqlWalDumper = new PostgresqlWalDumper(task, pageBuilder, schema, ConnectionManager.getReplicationConnection());
                 postgresqlWalDumper.start();
+                pageBuilder.finish();
             }
         } catch (Exception e) {
             // TODO: handle error
             System.out.println(e.getMessage());
         }
         return Exec.newTaskReport();
-
     }
 
     @Override
