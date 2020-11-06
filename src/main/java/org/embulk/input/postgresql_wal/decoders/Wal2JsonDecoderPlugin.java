@@ -3,9 +3,7 @@ package org.embulk.input.postgresql_wal.decoders;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.embulk.input.postgresql_wal.model.*;
-import org.jruby.RubyProcess;
 import org.postgresql.replication.LogSequenceNumber;
-import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,8 +52,6 @@ import java.util.Map;
 //      }
 //   ]
 //}
-
-
 public class Wal2JsonDecoderPlugin implements DecodingPlugin {
     private ObjectMapper mapper;
 
@@ -226,10 +222,6 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         }
 
         return pair;
-    }
-
-    class ArrayStringWrapper {
-        private List<String> values;
     }
 }
 
