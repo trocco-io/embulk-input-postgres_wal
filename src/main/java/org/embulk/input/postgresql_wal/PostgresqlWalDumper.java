@@ -73,7 +73,7 @@ public class PostgresqlWalDumper {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

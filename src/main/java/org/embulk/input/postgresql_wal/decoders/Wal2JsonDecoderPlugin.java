@@ -196,7 +196,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         DeleteRowEvent rowEvent = new DeleteRowEvent();
         rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
-        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "columnnames", "columnvalues"));
+        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "keynames", "keyvalues"));
         return rowEvent;
     }
 

@@ -39,8 +39,10 @@ public class PostgresqlWalInputPlugin
         control.run(taskSource, schema, taskCount);
 
         ConfigDiff configDiff = Exec.newConfigDiff();
+        if (LsnHolder.getLsn() != null){
+            configDiff.set("from_lsn", LsnHolder.getLsn().asString());
+        }
 
-        configDiff.set("from_lsn", LsnHolder.getLsn().asString());
         return configDiff;
     }
 
@@ -65,6 +67,7 @@ public class PostgresqlWalInputPlugin
         } catch (Exception e) {
             // TODO: handle error
             System.out.println(e.getMessage());
+            throw new RuntimeException(e);
         }
         return Exec.newTaskReport();
     }
