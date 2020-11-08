@@ -60,9 +60,6 @@ public class PostgresqlWalDumper {
                 List<AbstractRowEvent> rowEvents = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
                 for (AbstractRowEvent rowEvent: rowEvents) {
                     LsnHolder.setLsn(rowEvent.getNextLogSequenceNumber());
-                    if (rowEvent.getEventType() == null) {
-                        continue;
-                    }
                     handleRowEvent(rowEvent);
                 }
 
@@ -71,6 +68,9 @@ public class PostgresqlWalDumper {
                         break;
                     }
                 }
+            }
+            if (!stream.isClosed()){
+                stream.close();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -94,6 +94,12 @@ public class PostgresqlWalDumper {
 
     @VisibleForTesting
     public void handleRowEvent(AbstractRowEvent rowEvent) {
+        if (rowEvent.getEventType() == null) {
+            return;
+        }
+        if (!tableFilter(rowEvent)){
+            return;
+        }
         switch (rowEvent.getEventType()) {
             case INSERT:
                 handleInsert((InsertRowEvent) rowEvent);
@@ -108,6 +114,10 @@ public class PostgresqlWalDumper {
                 throw new RuntimeException("never reach here");
 
         }
+    }
+
+    public boolean tableFilter(AbstractRowEvent rowEvent){
+        return (task.getSchema().equals(rowEvent.getSchemaName()) && task.getTable().equals(rowEvent.getTableName()));
     }
 
     @VisibleForTesting

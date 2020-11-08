@@ -26,6 +26,9 @@ public interface PluginTask
     @Config("schema")
     public String getSchema();
 
+    @Config("table")
+    public String getTable();
+
     @Config("user")
     public String getUser();
 
