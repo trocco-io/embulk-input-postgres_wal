@@ -64,11 +64,11 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         // TODO: should return array of row event?
         List<AbstractRowEvent> rows = new ArrayList<AbstractRowEvent>();
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
-        System.out.println(jsonStr);
         try {
             JsonNode node = mapper.readTree(jsonStr);
-            JsonNode changeNode = node.get("change");
             LogSequenceNumber nextLsn = LogSequenceNumber.valueOf(node.get("nextlsn").asText());
+            LsnHolder.setLsn(nextLsn);
+            JsonNode changeNode = node.get("change");
 
             if (changeNode.isArray() && changeNode.size() >= 1) {
                 for (JsonNode dataNode : changeNode) {
