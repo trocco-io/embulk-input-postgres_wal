@@ -64,6 +64,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         // TODO: should return array of row event?
         List<AbstractRowEvent> rows = new ArrayList<AbstractRowEvent>();
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
+        System.out.println(jsonStr);
         try {
             JsonNode node = mapper.readTree(jsonStr);
             JsonNode changeNode = node.get("change");
