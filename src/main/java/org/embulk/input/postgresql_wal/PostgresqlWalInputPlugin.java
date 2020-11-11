@@ -65,7 +65,6 @@ public class PostgresqlWalInputPlugin
                 pageBuilder.finish();
             }
         } catch (Exception e) {
-            // TODO: handle error
             System.out.println(e.getMessage());
             throw new RuntimeException(e);
         }
@@ -85,7 +84,6 @@ public class PostgresqlWalInputPlugin
     private Schema buildSchema(PluginTask task) {
         int i = 0;
 
-        // add meta data
         ImmutableList.Builder<Column> builder = ImmutableList.builder();
         for (ColumnConfig column : task.getColumns().getColumns()) {
             Column outputColumn = new Column(i++, column.getName(), column.getType());

@@ -72,11 +72,13 @@ public class PostgresqlWalDumper {
             if (!stream.isClosed()){
                 stream.close();
             }
+            if (!ConnectionManager.getReplicationConnection().isClosed()){
+                ConnectionManager.getReplicationConnection().close();
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
 
     @VisibleForTesting
     public void addRows(Map<String, String> row, boolean deleteFlag) {

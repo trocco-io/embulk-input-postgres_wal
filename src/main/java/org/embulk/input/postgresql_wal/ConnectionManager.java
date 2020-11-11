@@ -42,7 +42,6 @@ public class ConnectionManager {
         String url = "jdbc:postgresql://" + ConnectionManager.server + ":" + ConnectionManager.port + "/" + ConnectionManager.database;
 
         Properties props = new Properties();
-
         PGProperty.USER.set(props, ConnectionManager.user);
         PGProperty.PASSWORD.set(props, ConnectionManager.password);
         PGProperty.ASSUME_MIN_SERVER_VERSION.set(props, "9.4");
@@ -57,27 +56,20 @@ public class ConnectionManager {
         return ConnectionManager.repConnection;
     }
 
-    public static void closeReplicationConnection() throws Exception {
-        ConnectionManager.repConnection.close();
-    }
+    // comment out for future
+    // public static void createSQLConnection() throws SQLException {
+    //     String url = "jdbc:postgresql://" + ConnectionManager.server + ":" + ConnectionManager.port + "/" + ConnectionManager.database;
 
-    public static void createSQLConnection() throws SQLException {
-        String url = "jdbc:postgresql://" + ConnectionManager.server + ":" + ConnectionManager.port + "/" + ConnectionManager.database;
+    //     Properties props = new Properties();
 
-        Properties props = new Properties();
+    //     props.setProperty("user", ConnectionManager.user);
+    //     props.setProperty("password", ConnectionManager.password);
+    //     props.putAll(ConnectionManager.options);
 
-        props.setProperty("user", ConnectionManager.user);
-        props.setProperty("password", ConnectionManager.password);
-        props.putAll(ConnectionManager.options);
+    //     ConnectionManager.sqlConnection = DriverManager.getConnection(url, props);
+    // }
 
-        ConnectionManager.sqlConnection = DriverManager.getConnection(url, props);
-    }
-
-    public static Connection getSQLConnection() {
-        return ConnectionManager.sqlConnection;
-    }
-
-    public static void closeSQLConnection() throws Exception {
-        ConnectionManager.sqlConnection.close();
-    }
+    // public static Connection getSQLConnection() {
+    //     return ConnectionManager.sqlConnection;
+    // }
 }
