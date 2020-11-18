@@ -53,6 +53,7 @@ public class PostgresqlWalDumper {
                         logger.info("WAL time out exceeded. Stop retrieving WAL");
                         break;
                     }
+                    continue;
                 }else{
                     retryCount = 0;
                     wait = waitMin;
