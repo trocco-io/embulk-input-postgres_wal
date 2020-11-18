@@ -73,14 +73,19 @@ public class PostgresqlWalDumper {
                     }
                 }
             }
-            if (!stream.isClosed()){
-                stream.close();
-            }
-            if (!ConnectionManager.getReplicationConnection().isClosed()){
-                ConnectionManager.getReplicationConnection().close();
-            }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }finally {
+            try {
+                if (stream != null && !stream.isClosed()){
+                    stream.close();
+                }
+                if (ConnectionManager.getReplicationConnection() != null && !ConnectionManager.getReplicationConnection().isClosed()){
+                    ConnectionManager.getReplicationConnection().close();
+                }
+            }catch (SQLException se){
+                se.printStackTrace();
+            }
         }
     }
 
