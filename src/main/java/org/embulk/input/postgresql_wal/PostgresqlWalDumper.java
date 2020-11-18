@@ -7,9 +7,12 @@ import org.embulk.spi.PageBuilder;
 import org.embulk.spi.Schema;
 import org.postgresql.replication.LogSequenceNumber;
 import org.postgresql.replication.PGReplicationStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +21,11 @@ public class PostgresqlWalDumper {
     private PluginTask task;
     private PageBuilder pageBuilder;
     private Schema schema;
-    private ConnectionManager connectionManager;
     private PostgresqlWalClient walClient;
     private Connection connection;
     private Wal2JsonDecoderPlugin decoderPlugin;
-    private LogSequenceNumber lsn;
+    private static final Logger logger = LoggerFactory.getLogger(PostgresqlWalDumper.class);
+    PGReplicationStream stream;
 
     public PostgresqlWalDumper(PluginTask task, PageBuilder pageBuilder, Schema schema, Connection connection) {
         this.task = task;
@@ -35,8 +38,7 @@ public class PostgresqlWalDumper {
     public void start() {
         try {
             walClient = new PostgresqlWalClient(connection);
-
-            PGReplicationStream stream = walClient.getReplicationStream(task.getSlot());
+            stream = walClient.getReplicationStream(task.getSlot());
             long waitMin = task.getWalInitialWait();
             int retryCount = 0;
             long wait = waitMin;
@@ -47,9 +49,8 @@ public class PostgresqlWalDumper {
                     TimeUnit.MILLISECONDS.sleep(wait);
                     retryCount += 1;
                     wait = waitMin * (long)Math.pow(2, retryCount);
-                    if (wait < task.getWalReadTimeout()){
-                        continue;
-                    } else {
+                    if (wait > task.getWalReadTimeout()){
+                        logger.info("WAL time out exceeded. Stop retrieving WAL");
                         break;
                     }
                 }else{
@@ -65,6 +66,9 @@ public class PostgresqlWalDumper {
 
                 if (task.getToLsn().isPresent()){
                     if (LsnHolder.getLsn().asLong() >= LogSequenceNumber.valueOf(task.getToLsn().get()).asLong()){
+                        logger.info("LSN exceeded to_lsn: {}, current_lsn: {}",
+                                task.getToLsn().get(),
+                                LsnHolder.getLsn().asString());
                         break;
                     }
                 }
