@@ -48,7 +48,11 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     public void booleanColumn(Column column) {
         try {
             String data = accessor.get(column.getName());
-            pageBuilder.setBoolean(column, Boolean.parseBoolean(data));
+            if (Objects.isNull(data)) {
+                pageBuilder.setNull(column);
+            }else{
+                pageBuilder.setBoolean(column, Boolean.parseBoolean(data));
+            }
         } catch (Exception e) {
             pageBuilder.setNull(column);
         }

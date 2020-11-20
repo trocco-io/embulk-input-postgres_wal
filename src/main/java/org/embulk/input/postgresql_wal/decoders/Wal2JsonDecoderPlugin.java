@@ -61,7 +61,6 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
 
     @Override
     public List<AbstractRowEvent> decode(final ByteBuffer data, final LogSequenceNumber logSequenceNumber) {
-        // TODO: should return array of row event?
         List<AbstractRowEvent> rows = new ArrayList<AbstractRowEvent>();
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
@@ -209,7 +208,11 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
     private ArrayList<String> covertArrayString(JsonNode node, String name) {
         ArrayList<String> values = new ArrayList<>();
         for (JsonNode n : node.get(name)) {
-            values.add(n.asText());
+            if (n.isNull()){
+                values.add(null);
+            }else{
+                values.add(n.asText());
+            }
         }
         return values;
     }
