@@ -91,16 +91,18 @@ public class PostgresqlWalDumper {
     }
 
     @VisibleForTesting
-    public void addRows(Map<String, String> row, boolean deleteFlag) {
+    public void addRows(List<Column> columns, boolean deleteFlag) {
         if (task.getEnableMetadataDeleted()) {
-            row.put(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag));
+            Column deleteFlagColumn = new Column(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag), "boolean");
+            columns.add(deleteFlagColumn);
         }
 
         if (task.getEnableMetadataSeq()) {
-            row.put(PostgresqlWalUtil.getSeqName(task), String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()));
+            Column seqColumn = new Column(PostgresqlWalUtil.getSeqName(task), String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()), "long");
+            columns.add(seqColumn);
         }
 
-        schema.visitColumns(new PostgresqlWalColumnVisitor(new PostgresqlWalAccessor(row), pageBuilder, task));
+        schema.visitColumns(new PostgresqlWalColumnVisitor(new PostgresqlWalAccessor(columns), pageBuilder, task));
         pageBuilder.addRecord();
     }
 
@@ -134,18 +136,18 @@ public class PostgresqlWalDumper {
 
     @VisibleForTesting
     public void handleInsert(InsertRowEvent insertRowEvent) {
-        addRows(insertRowEvent.getFields(), false);
+        addRows(insertRowEvent.getColumns(), false);
     }
 
     @VisibleForTesting
     public void handleUpdate(UpdateRowEvent updateRowEvent) {
-        addRows(updateRowEvent.getPrimaryKeys(), true);
-        addRows(updateRowEvent.getFields(), false);
+        addRows(updateRowEvent.getPrimaryKeyColumns(), true);
+        addRows(updateRowEvent.getColumns(), false);
 
     }
 
     @VisibleForTesting
     public void handleDelete(DeleteRowEvent deleteRowEvent) {
-        addRows(deleteRowEvent.getPrimaryKeys(), true);
+        addRows(deleteRowEvent.getPrimaryKeyColumns(), true);
     }
 }

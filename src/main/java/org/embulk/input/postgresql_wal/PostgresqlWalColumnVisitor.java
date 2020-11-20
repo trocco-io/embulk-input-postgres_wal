@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class PostgresqlWalColumnVisitor implements ColumnVisitor {
-    // timestamp pattern?
     private static final String DEFAULT_TIMESTAMP_PATTERN = "%Y-%m-%d %H:%M:%S";
     private final Logger logger = LoggerFactory.getLogger(PostgresqlWalColumnVisitor.class);
 
@@ -33,7 +32,13 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     @Override
     public void stringColumn(Column column) {
         try {
-            String data = accessor.get(column.getName());
+            org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+            String data = col.getValue();
+            // assume input-postgresql plugin use json type for hstore
+            // convert hstore to json to support same function
+            if (col.getType().equals("hstore")){
+                data = PostgresqlWalUtil.hstoreToJson(col.getValue());
+            }
             if (Objects.isNull(data)) {
                 pageBuilder.setNull(column);
             } else {
@@ -47,7 +52,8 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     @Override
     public void booleanColumn(Column column) {
         try {
-            String data = accessor.get(column.getName());
+            org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+            String data = col.getValue();
             if (Objects.isNull(data)) {
                 pageBuilder.setNull(column);
             }else{
@@ -61,8 +67,16 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     @Override
     public void longColumn(Column column) {
         try {
-            String data = accessor.get(column.getName());
-            pageBuilder.setLong(column, Long.parseLong(data));
+            org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+            String data = col.getValue();
+            if (col.getType().equals("money")){
+                data = PostgresqlWalUtil.extractNumeric(data);
+            }
+            if (Objects.isNull(data)) {
+                pageBuilder.setNull(column);
+            }else{
+                pageBuilder.setLong(column, Long.parseLong(data));
+            }
         } catch (Exception e) {
             pageBuilder.setNull(column);
         }
@@ -71,8 +85,16 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     @Override
     public void doubleColumn(Column column) {
         try {
-            String data = accessor.get(column.getName());
-            pageBuilder.setDouble(column, Double.parseDouble(data));
+            org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+            String data = col.getValue();
+            if (col.getType().equals("money")){
+                data = PostgresqlWalUtil.extractNumeric(data);
+            }
+            if (Objects.isNull(data)) {
+                pageBuilder.setNull(column);
+            }else{
+                pageBuilder.setDouble(column, Double.parseDouble(data));
+            }
         } catch (Exception e) {
             pageBuilder.setNull(column);
         }
@@ -99,7 +121,8 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
                     }
                 }
                 TimestampParser parser = TimestampParser.of(pattern, pluginTask.getDefaultTimezone());
-                result = parser.parse(accessor.get(column.getName()));
+                org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+                result = parser.parse(col.getValue());
             }
             pageBuilder.setTimestamp(column, result);
         } catch (Exception e) {
@@ -110,7 +133,14 @@ public class PostgresqlWalColumnVisitor implements ColumnVisitor {
     @Override
     public void jsonColumn(Column column) {
         try {
-            JsonElement data = new com.google.gson.JsonParser().parse(accessor.get(column.getName()));
+            org.embulk.input.postgresql_wal.model.Column col = accessor.get(column.getName());
+            JsonElement data;
+            if (col.getType().equals("hstore")){
+                String jsonStr = PostgresqlWalUtil.hstoreToJson(col.getValue());
+                data =  new com.google.gson.JsonParser().parse(jsonStr);
+            }else{
+                data = new com.google.gson.JsonParser().parse(col.getValue());
+            }
             if (data.isJsonNull() || data.isJsonPrimitive()) {
                 pageBuilder.setNull(column);
             } else {

@@ -8,10 +8,7 @@ import org.postgresql.replication.LogSequenceNumber;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 // {
@@ -65,6 +62,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
             JsonNode node = mapper.readTree(jsonStr);
+            System.out.println(jsonStr);
             LogSequenceNumber nextLsn = LogSequenceNumber.valueOf(node.get("nextlsn").asText());
             LsnHolder.setLsn(nextLsn);
             JsonNode changeNode = node.get("change");
@@ -121,7 +119,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         InsertRowEvent rowEvent = new InsertRowEvent();
         rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
-        rowEvent.setFields(makePair(node, "columnnames", "columnvalues"));
+        rowEvent.setColumns(makeColumns(node, "columnnames", "columntypes", "columnvalues"));
         return rowEvent;
     }
 
@@ -167,8 +165,8 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         UpdateRowEvent rowEvent = new UpdateRowEvent();
         rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
-        rowEvent.setFields(makePair(node, "columnnames", "columnvalues"));
-        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "keynames", "keyvalues"));
+        rowEvent.setColumns(makeColumns(node, "columnnames", "columntypes", "columnvalues"));
+        rowEvent.setPrimaryKeyColumns(makeColumns(node.get("oldkeys"), "keynames", "keytypes", "keyvalues"));
         return rowEvent;
     }
 
@@ -196,7 +194,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         DeleteRowEvent rowEvent = new DeleteRowEvent();
         rowEvent.setNextLogSequenceNumber(lsn);
         setMeta(rowEvent, node);
-        rowEvent.setPrimaryKeys(makePair(node.get("oldkeys"), "keynames", "keyvalues"));
+        rowEvent.setPrimaryKeyColumns(makeColumns(node.get("oldkeys"), "keynames", "keytypes", "keyvalues"));
         return rowEvent;
     }
 
@@ -217,15 +215,21 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         return values;
     }
 
-    private Map<String, String> makePair(JsonNode node, String keyName, String valueName) {
+    private List<Column> makeColumns(JsonNode node, String keyName, String typeName, String valueName){
         ArrayList<String> columnNames = covertArrayString(node, keyName);
+        ArrayList<String> columnTypes = covertArrayString(node, typeName);
         ArrayList<String> columnValues = covertArrayString(node, valueName);
-        Map<String, String> pair = new HashMap<>();
-        for (int i = 0; i < Math.max(columnNames.size(), columnValues.size()); i++) {
-            pair.put(columnNames.get(i), columnValues.get(i));
-        }
 
-        return pair;
+        Integer[] sizeArray = {columnNames.size(),columnTypes.size(), columnValues.size()};
+        Set<Integer> checkValue = new HashSet<Integer>(Arrays.asList(sizeArray));
+        assert checkValue.size() == 1 : "key, value, type have to be same length";
+
+        List<Column> columns = new ArrayList<>();
+        for (int i = 0; i < columnNames.size(); i++){
+            Column column = new Column(columnNames.get(i), columnTypes.get(i), columnValues.get(i));
+            columns.add(column);
+        }
+        return columns;
     }
 }
 

@@ -1,15 +1,22 @@
 package org.embulk.input.postgresql_wal;
 
+import org.embulk.input.postgresql_wal.model.Column;
+
+import java.util.List;
 import java.util.Map;
 
 public class PostgresqlWalAccessor {
-    private final Map<String, String> row;
+    private final List<Column> columns;
 
-    public PostgresqlWalAccessor(final Map<String, String> row) {
-        this.row = row;
+    public PostgresqlWalAccessor(final List<Column> columns) {
+        this.columns = columns;
     }
 
-    public String get(String name) {
-        return row.getOrDefault(name, null);
+    public Column get(String name) {
+        Column col = columns.stream().filter(column -> column.getName().equals(name)).findFirst().orElseGet(null);
+        if (col == null){
+            return null;
+        }
+        return col;
     }
 }
