@@ -67,7 +67,7 @@ public class PostgresqlWalDumper {
 
                 if (task.getToLsn().isPresent()){
                     if (LsnHolder.getLsn().asLong() >= LogSequenceNumber.valueOf(task.getToLsn().get()).asLong()){
-                        logger.info("LSN exceeded to_lsn: {}, current_lsn: {}",
+                        logger.info("Next LSN exceeded to_lsn: {}, current_lsn: {}",
                                 task.getToLsn().get(),
                                 LsnHolder.getLsn().asString());
                         break;

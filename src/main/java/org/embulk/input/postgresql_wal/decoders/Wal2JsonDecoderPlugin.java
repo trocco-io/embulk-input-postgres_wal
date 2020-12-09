@@ -62,7 +62,6 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
             JsonNode node = mapper.readTree(jsonStr);
-            System.out.println(jsonStr);
             LogSequenceNumber nextLsn = LogSequenceNumber.valueOf(node.get("nextlsn").asText());
             LsnHolder.setLsn(nextLsn);
             JsonNode changeNode = node.get("change");
