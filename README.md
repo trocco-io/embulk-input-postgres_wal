@@ -27,7 +27,7 @@ Minimum support version of PostgreSQL is 9.4 for [Logical replication API](https
 - **enable_metadata_fetched_at**: flag to add metadata synced_at to each row (bool, default: `true`)
 - **enable_metadata_seq**: sequence number of record (bool, default: `true`)
 - **metadata_prefix**: metadata prefix (string, default: `_`)
-- **columns**: MySQL column
+- **columns**: PostgreSQL column
     - name: name of the column
     - type: data type of the column
     - format: timestamp format
