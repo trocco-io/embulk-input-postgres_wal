@@ -14,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class PostgresqlWalDumper {
@@ -61,9 +60,10 @@ public class PostgresqlWalDumper {
 
                 List<AbstractRowEvent> rowEvents = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
                 for (AbstractRowEvent rowEvent: rowEvents) {
-                    LsnHolder.setLsn(rowEvent.getNextLogSequenceNumber());
                     handleRowEvent(rowEvent);
+                    LsnHolder.setLsn(rowEvent.getNextLogSequenceNumber());
                 }
+                pageBuilder.flush();
 
                 if (task.getToLsn().isPresent()){
                     if (LsnHolder.getLsn().asLong() >= LogSequenceNumber.valueOf(task.getToLsn().get()).asLong()){
@@ -91,7 +91,7 @@ public class PostgresqlWalDumper {
     }
 
     @VisibleForTesting
-    public void addRows(List<Column> columns, boolean deleteFlag) {
+    public void addRow(List<Column> columns, boolean deleteFlag) {
         if (task.getEnableMetadataDeleted()) {
             Column deleteFlagColumn = new Column(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag), "boolean");
             columns.add(deleteFlagColumn);
@@ -136,18 +136,18 @@ public class PostgresqlWalDumper {
 
     @VisibleForTesting
     public void handleInsert(InsertRowEvent insertRowEvent) {
-        addRows(insertRowEvent.getColumns(), false);
+        addRow(insertRowEvent.getColumns(), false);
     }
 
     @VisibleForTesting
     public void handleUpdate(UpdateRowEvent updateRowEvent) {
-        addRows(updateRowEvent.getPrimaryKeyColumns(), true);
-        addRows(updateRowEvent.getColumns(), false);
+        addRow(updateRowEvent.getPrimaryKeyColumns(), true);
+        addRow(updateRowEvent.getColumns(), false);
 
     }
 
     @VisibleForTesting
     public void handleDelete(DeleteRowEvent deleteRowEvent) {
-        addRows(deleteRowEvent.getPrimaryKeyColumns(), true);
+        addRow(deleteRowEvent.getPrimaryKeyColumns(), true);
     }
 }

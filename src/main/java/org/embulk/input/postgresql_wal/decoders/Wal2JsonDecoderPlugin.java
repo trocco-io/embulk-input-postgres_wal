@@ -10,6 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+// see wal2json format 1
+// https://github.com/eulerto/wal2json
+
 
 // {
 //   "change":[
@@ -62,9 +65,7 @@ public class Wal2JsonDecoderPlugin implements DecodingPlugin {
         String jsonStr = StandardCharsets.UTF_8.decode(data).toString();
         try {
             JsonNode node = mapper.readTree(jsonStr);
-            System.out.println(jsonStr);
             LogSequenceNumber nextLsn = LogSequenceNumber.valueOf(node.get("nextlsn").asText());
-            LsnHolder.setLsn(nextLsn);
             JsonNode changeNode = node.get("change");
 
             if (changeNode.isArray() && changeNode.size() >= 1) {
