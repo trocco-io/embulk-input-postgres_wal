@@ -13,7 +13,7 @@ configurations {
     provided
 }
 
-version = "0.1.10"
+version = "0.1.11"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -23,7 +23,7 @@ dependencies {
     provided "org.embulk:embulk-core:0.9.23"
     compile  "org.embulk:embulk-core:0.9.23"
 
-    compile  'com.google.code.gson:gson:2.8.6'
+    compile 'com.google.code.gson:gson:2.8.6'
     compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
     compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
