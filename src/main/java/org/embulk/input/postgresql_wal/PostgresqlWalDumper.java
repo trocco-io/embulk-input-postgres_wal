@@ -93,12 +93,12 @@ public class PostgresqlWalDumper {
     @VisibleForTesting
     public void addRow(List<Column> columns, boolean deleteFlag) {
         if (task.getEnableMetadataDeleted()) {
-            Column deleteFlagColumn = new Column(PostgresqlWalUtil.getDeleteFlagName(task), String.valueOf(deleteFlag), "boolean");
+            Column deleteFlagColumn = new Column(PostgresqlWalUtil.getDeleteFlagName(task), "boolean", String.valueOf(deleteFlag));
             columns.add(deleteFlagColumn);
         }
 
         if (task.getEnableMetadataSeq()) {
-            Column seqColumn = new Column(PostgresqlWalUtil.getSeqName(task), String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()), "long");
+            Column seqColumn = new Column(PostgresqlWalUtil.getSeqName(task),"long", String.valueOf(PostgresqlWalUtil.getSeqCounter().incrementAndGet()));
             columns.add(seqColumn);
         }
 
