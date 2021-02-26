@@ -59,6 +59,9 @@ public class PostgresqlWalDumper {
                 }
 
                 List<AbstractRowEvent> rowEvents = decoderPlugin.decode(msg, stream.getLastReceiveLSN());
+                if (rowEvents.isEmpty()){
+                    continue;
+                }
                 for (AbstractRowEvent rowEvent: rowEvents) {
                     handleRowEvent(rowEvent);
                     LsnHolder.setLsn(rowEvent.getNextLogSequenceNumber());
